@@ -20,7 +20,11 @@ export enum Product {
     nbconvert = 22,
     pandas = 23,
     pip = 27,
-    ensurepip = 28
+    ensurepip = 28,
+    /**
+     * Used to install Python into a conda env.
+     */
+    pythonInConda = 29
 }
 
 export enum ProductInstallStatus {

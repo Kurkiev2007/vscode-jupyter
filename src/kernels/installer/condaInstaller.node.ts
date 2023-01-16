@@ -89,6 +89,10 @@ export class CondaInstaller extends ModuleInstaller {
             // If we have the name of the conda environment, then use that.
             args.push('--name');
             args.push(name.toCommandArgument());
+            // If we're install Python into an environment, then also install ipykernel.
+            if (translateProductToModule(Product.pythonInConda) === moduleName) {
+                args.push(translateProductToModule(Product.ipykernel));
+            }
         } else if (envPath) {
             // Else provide the full path to the environment path.
             args.push('--prefix');

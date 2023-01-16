@@ -134,6 +134,9 @@ export namespace DataScience {
         pythonEnvName: string,
         pythonModuleName: string
     ) => l10n.t("Running cells with '{0}' requires the {1} package.", pythonEnvName, pythonModuleName);
+    export const pythonRequiredToLaunchJupyterNotInstalledInConda = (pythonEnvName: string, pythonModuleName: string) =>
+        l10n.t("Running cells with '{0}' requires Python and the {0} package.", pythonEnvName, pythonModuleName);
+
     export const installPackageInstructions = (pythonModuleName: string, commandId: string) =>
         l10n.t(
             "Run the following command to install '{0}' into the Python environment. \nCommand: '{1}'",

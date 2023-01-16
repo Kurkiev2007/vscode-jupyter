@@ -22,6 +22,8 @@ export function translateProductToModule(product: Product): string {
             return 'pip';
         case Product.ensurepip:
             return 'ensurepip';
+        case Product.pythonInConda:
+            return 'python';
         default: {
             throw new Error(`Product ${product} cannot be installed as a Python Module.`);
         }

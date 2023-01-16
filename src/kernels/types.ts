@@ -275,6 +275,9 @@ export class PythonKernelConnectionMetadata {
             kind: this.kind
         };
     }
+    public updateInterpreter(interpreter: PythonEnvironment) {
+        Object.assign(this.interpreter, interpreter);
+    }
     public static fromJSON(options: Record<string, unknown> | PythonKernelConnectionMetadata) {
         return BaseKernelConnectionMetadata.fromJSON(options) as PythonKernelConnectionMetadata;
     }
@@ -889,3 +892,8 @@ export type IKernelController = {
     id: string;
     createNotebookCellExecution(cell: NotebookCell): NotebookCellExecution;
 };
+
+export const IKernelPythonCondaInstaller = Symbol('IKernelPythonCondaInstaller');
+export interface IKernelPythonCondaInstaller {
+    installPythonIntoCondaEnv(resource: Resource, interpreter: PythonEnvironment): Promise<void>;
+}

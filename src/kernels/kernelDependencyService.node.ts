@@ -26,6 +26,7 @@ import { IRawNotebookSupportedService } from './raw/types';
 import { getComparisonKey } from '../platform/vscode-path/resources';
 import { isModulePresentInEnvironment } from './installer/productInstaller.node';
 import { sendKernelTelemetryEvent } from './telemetry/sendKernelTelemetryEvent';
+import { IInterpreterService } from '../platform/interpreter/contracts';
 
 /**
  * Responsible for managing dependencies of a Python interpreter required to run as a Jupyter Kernel.
@@ -174,6 +175,12 @@ export class KernelDependencyService implements IKernelDependencyService {
         ) {
             return true;
         }
+        if (
+            kernelConnection.kind === 'startUsingPythonInterpreter' &&
+            (await this.isCondaEnvironmentWithoutPython(kernelConnection.interpreter))
+        ) {
+            return false;
+        }
         // Check cache, faster than spawning process every single time.
         // Makes a big difference with conda on windows.
         if (
@@ -207,6 +214,18 @@ export class KernelDependencyService implements IKernelDependencyService {
         ]);
     }
 
+    private async isCondaEnvironmentWithoutPython(interpreter: PythonEnvironment): Promise<boolean | undefined> {
+        if (interpreter.isCondaEnvWithoutPython) {
+            // Double check whether Python is installed or not.
+            const interpreterService = this.serviceContainer.get<IInterpreterService>(IInterpreterService);
+            interpreter = ((await interpreterService.getInterpreterDetails(interpreter.uri).catch(() => undefined)) ||
+                interpreter) as PythonEnvironment;
+            if (interpreter.isCondaEnvWithoutPython) {
+                return true;
+            }
+        }
+        return false;
+    }
     private async runInstaller(
         resource: Resource,
         interpreter: PythonEnvironment,
@@ -224,11 +243,19 @@ export class KernelDependencyService implements IKernelDependencyService {
         if (ui.disableUI) {
             return KernelInterpreterDependencyResponse.uiHidden;
         }
+
+        let pythonIsNotInstalled = false;
+        if (await this.isCondaEnvironmentWithoutPython(interpreter)) {
+            pythonIsNotInstalled = true;
+        }
+
         const [isModulePresent, isPipAvailableForNonConda] = await Promise.all([
-            isModulePresentInEnvironment(this.memento, Product.ipykernel, interpreter),
+            pythonIsNotInstalled
+                ? Promise.resolve(false)
+                : isModulePresentInEnvironment(this.memento, Product.ipykernel, interpreter),
             interpreter.envType === EnvironmentType.Conda
-                ? undefined
-                : await this.installer.isInstalled(Product.pip, interpreter)
+                ? Promise.resolve(undefined)
+                : this.installer.isInstalled(Product.pip, interpreter)
         ]);
         if (cancelTokenSource.token.isCancellationRequested) {
             return KernelInterpreterDependencyResponse.cancel;
@@ -236,7 +263,14 @@ export class KernelDependencyService implements IKernelDependencyService {
         const messageFormat = isModulePresent
             ? DataScience.libraryRequiredToLaunchJupyterKernelNotInstalledInterpreterAndRequiresUpdate
             : DataScience.libraryRequiredToLaunchJupyterKernelNotInstalledInterpreter;
-        const products = isPipAvailableForNonConda === false ? [Product.ipykernel, Product.pip] : [Product.ipykernel];
+        const products: Product[] = [];
+        if (pythonIsNotInstalled) {
+            products.push(Product.pythonInConda);
+        }
+        products.push(Product.ipykernel);
+        if (isPipAvailableForNonConda === false) {
+            products.push(Product.pip);
+        }
         const message = messageFormat(
             interpreter.displayName || interpreter.uri.fsPath,
             products.map((product) => ProductNames.get(product)!).join(` ${Common.and} `)
@@ -337,17 +371,20 @@ export class KernelDependencyService implements IKernelDependencyService {
                     defaultValue: InstallerResponse.Cancelled,
                     token: cancelTokenSource.token
                 });
+                // Install Python if not installed into the conda env, then install Python into the conda env.
+                // When installing Python, the ipykernel module will be installed as well.
+                const installMissingPackages = pythonIsNotInstalled
+                    ? () => this.installer.install(Product.pythonInConda, interpreter, cancelTokenSource)
+                    : () =>
+                          this.installer.install(
+                              Product.ipykernel,
+                              interpreter,
+                              cancelTokenSource,
+                              isModulePresent === true,
+                              isPipAvailableForNonConda === false
+                          );
                 // Always pass a cancellation token to `install`, to ensure it waits until the module is installed.
-                const response = await Promise.race([
-                    this.installer.install(
-                        Product.ipykernel,
-                        interpreter,
-                        cancelTokenSource,
-                        isModulePresent === true,
-                        isPipAvailableForNonConda === false
-                    ),
-                    cancellationPromise
-                ]);
+                const response = await Promise.race([installMissingPackages(), cancellationPromise]);
                 if (response === InstallerResponse.Installed) {
                     sendKernelTelemetryEvent(resource, Telemetry.PythonModuleInstall, undefined, {
                         action: 'installed',

@@ -571,12 +571,19 @@ function getIPyKernelMissingErrorMessageForCell(kernelConnection: KernelConnecti
         kernelConnection.interpreter.uri
     ).fileToCommandArgument()} -m pip install ${ipyKernelModuleName} -U --force-reinstall`;
     if (kernelConnection.interpreter?.envType === EnvironmentType.Conda) {
+        const packagesToInstall = kernelConnection.interpreter.isCondaEnvWithoutPython
+            ? `python ${ipyKernelModuleName}`
+            : ipyKernelModuleName;
         if (kernelConnection.interpreter?.envName) {
-            installerCommand = `conda install -n ${kernelConnection.interpreter?.envName} ${ipyKernelModuleName} --update-deps --force-reinstall`;
+            installerCommand = `conda install -n ${kernelConnection.interpreter?.envName} ${packagesToInstall}`;
         } else if (kernelConnection.interpreter?.envPath) {
             installerCommand = `conda install -p ${getFilePath(
                 kernelConnection.interpreter?.envPath
-            )} ${ipyKernelModuleName} --update-deps --force-reinstall`;
+            )} ${packagesToInstall}`;
+        }
+        // If we're installing Python into the conda env as well, then do not include the trailing args.
+        if (!kernelConnection.interpreter.isCondaEnvWithoutPython) {
+            installerCommand = `${installerCommand} --update-deps --force-reinstall`;
         }
     } else if (kernelConnection.interpreter?.envType === EnvironmentType.Unknown) {
         installerCommand = `${getFilePath(

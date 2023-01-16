@@ -57,7 +57,11 @@ function sortProductsInOrderForInstallation(products: Product[]) {
  * @param {string} [interpreterName]
  * @returns {string}
  */
-export function getMessageForLibrariesNotInstalled(products: Product[], interpreterName?: string): string {
+export function getMessageForLibrariesNotInstalled(products: Product[], interpreter: PythonEnvironment): string {
+    const isPythonNoInstalled = products.includes(Product.pythonInConda);
+    const interpreterName =
+        interpreter.displayName || interpreter.envName || interpreter.envPath?.fsPath || interpreter.uri.fsPath;
+    products = products.filter((p) => p !== Product.pythonInConda);
     // Even though kernelspec cannot be installed, display it so user knows what is missing.
     const names = products
         .map((product) => ProductNames.get(product))
@@ -68,19 +72,22 @@ export function getMessageForLibrariesNotInstalled(products: Product[], interpre
         case 0:
             return '';
         case 1:
-            return interpreterName
-                ? DataScience.libraryRequiredToLaunchJupyterNotInstalledInterpreter(interpreterName, names[0])
-                : DataScience.libraryRequiredToLaunchJupyterNotInstalled(names[0]);
+            if (isPythonNoInstalled) {
+                return DataScience.pythonRequiredToLaunchJupyterNotInstalledInConda(interpreterName, names[0]);
+            }
+            return DataScience.libraryRequiredToLaunchJupyterNotInstalledInterpreter(interpreterName, names[0]);
         default: {
             const lastItem = names.pop();
-            return interpreterName
-                ? DataScience.librariesRequiredToLaunchJupyterNotInstalledInterpreter(
-                      interpreterName,
-                      `${names.join(', ')} ${Common.and} ${lastItem}`
-                  )
-                : DataScience.librariesRequiredToLaunchJupyterNotInstalled(
-                      `${names.join(', ')} ${Common.and} ${lastItem}`
-                  );
+            if (isPythonNoInstalled) {
+                return DataScience.librariesRequiredToLaunchJupyterNotInstalledInterpreter(
+                    interpreterName,
+                    `${names.join(', ')} ${Common.and} ${lastItem}`
+                );
+            }
+            return DataScience.librariesRequiredToLaunchJupyterNotInstalledInterpreter(
+                interpreterName,
+                `${names.join(', ')} ${Common.and} ${lastItem}`
+            );
         }
     }
 }
@@ -143,7 +150,7 @@ export class JupyterInterpreterDependencyService {
 
             const message = getMessageForLibrariesNotInstalled(
                 pipInstalledInNonCondaEnv === false ? [Product.pip].concat(missingProducts) : missingProducts,
-                interpreter.displayName
+                interpreter
             );
             sendTelemetryEvent(Telemetry.PythonModuleInstall, undefined, {
                 action: 'displayed',

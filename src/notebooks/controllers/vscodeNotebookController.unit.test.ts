@@ -40,6 +40,8 @@ import { TestNotebookDocument } from '../../test/datascience/notebook/executionH
 import { KernelConnector } from './kernelConnector';
 import { ITrustedKernelPaths } from '../../kernels/raw/finder/types';
 import { ConnectionDisplayDataProvider } from './connectionDisplayData';
+import { IInterpreterService } from '../../platform/interpreter/contracts';
+import { PythonEnvironment } from '../../platform/pythonEnvironments/info';
 
 (['Insiders', 'Stable'] as KernelPickerType[]).forEach((kernelPickerType) => {
     suite(`Notebook Controller for ${kernelPickerType}`, function () {
@@ -72,6 +74,7 @@ import { ConnectionDisplayDataProvider } from './connectionDisplayData';
         let trustedPaths: ITrustedKernelPaths;
         let displayDataProvider: ConnectionDisplayDataProvider;
         let featureManager: IFeaturesManager;
+        let interpreterService: IInterpreterService;
         setup(async function () {
             kernelConnection = mock<KernelConnectionMetadata>();
             vscNotebookApi = mock<IVSCodeNotebook>();
@@ -97,8 +100,12 @@ import { ConnectionDisplayDataProvider } from './connectionDisplayData';
             }>();
             jupyterSettings = mock<IWatchableJupyterSettings>();
             trustedPaths = mock<ITrustedKernelPaths>();
+            interpreterService = mock<IInterpreterService>();
+            const onDidChangeInterpreters = new EventEmitter<PythonEnvironment[]>();
+            when(interpreterService.onDidChangeInterpreters).thenReturn(onDidChangeInterpreters.event);
             onDidCloseNotebookDocument = new EventEmitter<NotebookDocument>();
             disposables.push(onDidChangeSelectedNotebooks);
+            disposables.push(onDidChangeInterpreters);
             disposables.push(onDidCloseNotebookDocument);
             clock = fakeTimers.install();
             disposables.push(new Disposable(() => clock.uninstall()));
@@ -142,7 +149,8 @@ import { ConnectionDisplayDataProvider } from './connectionDisplayData';
                 instance(workspace),
                 instance(platform),
                 instance(jupyterUriStorage),
-                disposables
+                disposables,
+                instance(interpreterService)
             );
         });
         teardown(() => disposeAllDisposables(disposables));

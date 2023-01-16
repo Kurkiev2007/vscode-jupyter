@@ -37,6 +37,7 @@ import { sleep } from '../../platform/common/utils/async';
 import { trackPackageInstalledIntoInterpreter } from './productInstaller';
 import { translateProductToModule } from './utils';
 import { IInterpreterPackages } from '../../platform/interpreter/types';
+import { IInterpreterService } from '../../platform/interpreter/contracts';
 
 export async function isModulePresentInEnvironment(memento: Memento, product: Product, interpreter: PythonEnvironment) {
     const key = `${await getInterpreterHash(interpreter)}#${ProductNames.get(product)}`;
@@ -116,6 +117,12 @@ export class DataScienceInstaller {
 
     @traceDecoratorVerbose('Checking if product is installed')
     public async isInstalled(product: Product, @logValue('path') interpreter: PythonEnvironment): Promise<boolean> {
+        if (product === Product.pythonInConda) {
+            const updatedInterpreter = await this.serviceContainer
+                .get<IInterpreterService>(IInterpreterService)
+                .getInterpreterDetails(interpreter.id);
+            return updatedInterpreter?.isCondaEnvWithoutPython === true ? false : true;
+        }
         const executableName = this.getExecutableNameFromSettings(product, undefined);
         const isModule = this.isExecutableAModule(product, undefined);
         if (isModule) {

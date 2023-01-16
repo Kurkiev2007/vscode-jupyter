@@ -87,7 +87,7 @@ import { NotebookCellLanguageService } from '../languages/cellLanguageService';
 import { IDataScienceErrorHandler } from '../../kernels/errors/types';
 import { ITrustedKernelPaths } from '../../kernels/raw/finder/types';
 import { KernelController } from '../../kernels/kernelController';
-import { ConnectionDisplayDataProvider } from './connectionDisplayData';
+import { ConnectionDisplayDataProvider, IConnectionDisplayData } from './connectionDisplayData';
 
 /**
  * Our implementation of the VSCode Notebook Controller. Called by VS code to execute cells in a notebook. Also displayed
@@ -144,6 +144,7 @@ export class VSCodeNotebookController implements Disposable, IVSCodeNotebookCont
     public isAssociatedWithDocument(doc: NotebookDocument) {
         return this.associatedDocuments.has(doc);
     }
+    private readonly displayData: IConnectionDisplayData;
 
     private readonly associatedDocuments = new WeakMap<NotebookDocument, Promise<void>>();
     public static create(
@@ -208,15 +209,6 @@ export class VSCodeNotebookController implements Disposable, IVSCodeNotebookCont
         private readonly featureManager: IFeaturesManager
     ) {
         disposableRegistry.push(this);
-        displayDataProvider.onDidChange(
-            (e) => {
-                if (e.connectionId === this.connection.id) {
-                    this.updateDisplayData();
-                }
-            },
-            this,
-            this.disposables
-        );
         this._onNotebookControllerSelected = new EventEmitter<{
             notebook: NotebookDocument;
             controller: VSCodeNotebookController;
@@ -234,6 +226,8 @@ export class VSCodeNotebookController implements Disposable, IVSCodeNotebookCont
             this.getRendererScripts(),
             []
         );
+        this.displayData = this.displayDataProvider.getDisplayData(this.connection);
+        this.displayData.onDidChange(this.updateDisplayData, this, this.disposables);
         this.updateDisplayData();
 
         // Fill in extended info for our controller
@@ -310,11 +304,10 @@ export class VSCodeNotebookController implements Disposable, IVSCodeNotebookCont
         disposeAllDisposables(this.disposables);
     }
     private updateDisplayData() {
-        const displayData = this.displayDataProvider.getDisplayData(this.connection);
-        this.controller.label = displayData.label;
-        this.controller.description = displayData.description;
-        this.controller.detail = displayData.detail;
-        this.controller.kind = displayData.category;
+        this.controller.label = this.displayData.label;
+        this.controller.description = this.displayData.description;
+        this.controller.detail = this.displayData.detail;
+        this.controller.kind = this.displayData.category;
     }
     // Handle the execution of notebook cell
     @traceDecoratorVerbose('VSCodeNotebookController::handleExecution', TraceOptions.BeforeCall)
