@@ -278,7 +278,7 @@ export function getDisplayNameOrNameOfKernelConnection(kernelConnection: KernelC
                 // If this is a conda environment without Python, then don't display `Python` in it.
                 const isCondaEnvWithoutPython =
                     kernelConnection.interpreter.envType === EnvironmentType.Conda &&
-                    kernelConnection.interpreter.isCondaEnvWithoutPython;
+                    kernelConnection.interpreter.isCondaEnvWithoutPython === true;
                 const pythonDisplayName = pythonVersion.trim() ? `Python ${pythonVersion}` : 'Python';
                 const envName = getPythonEnvironmentName(kernelConnection.interpreter);
                 if (isCondaEnvWithoutPython && envName) {
