@@ -892,8 +892,3 @@ export type IKernelController = {
     id: string;
     createNotebookCellExecution(cell: NotebookCell): NotebookCellExecution;
 };
-
-export const IKernelPythonCondaInstaller = Symbol('IKernelPythonCondaInstaller');
-export interface IKernelPythonCondaInstaller {
-    installPythonIntoCondaEnv(resource: Resource, interpreter: PythonEnvironment): Promise<void>;
-}
