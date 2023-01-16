@@ -26,7 +26,6 @@ import { IRawNotebookSupportedService } from './raw/types';
 import { getComparisonKey } from '../platform/vscode-path/resources';
 import { isModulePresentInEnvironment } from './installer/productInstaller.node';
 import { sendKernelTelemetryEvent } from './telemetry/sendKernelTelemetryEvent';
-import { IInterpreterService } from '../platform/interpreter/contracts';
 
 /**
  * Responsible for managing dependencies of a Python interpreter required to run as a Jupyter Kernel.
@@ -215,12 +214,10 @@ export class KernelDependencyService implements IKernelDependencyService {
     }
 
     private async isCondaEnvironmentWithoutPython(interpreter: PythonEnvironment): Promise<boolean | undefined> {
-        if (interpreter.isCondaEnvWithoutPython) {
-            // Double check whether Python is installed or not.
-            const interpreterService = this.serviceContainer.get<IInterpreterService>(IInterpreterService);
-            interpreter = ((await interpreterService.getInterpreterDetails(interpreter.uri).catch(() => undefined)) ||
-                interpreter) as PythonEnvironment;
-            if (interpreter.isCondaEnvWithoutPython) {
+        if (interpreter.isCondaEnvWithoutPython && interpreter.envType === EnvironmentType.Conda) {
+            if (await this.installer.isInstalled(Product.pythonInConda, interpreter)) {
+                return false;
+            } else {
                 return true;
             }
         }
@@ -260,7 +257,9 @@ export class KernelDependencyService implements IKernelDependencyService {
         if (cancelTokenSource.token.isCancellationRequested) {
             return KernelInterpreterDependencyResponse.cancel;
         }
-        const messageFormat = isModulePresent
+        const messageFormat = pythonIsNotInstalled
+            ? DataScience.pythonRequiredToLaunchJupyterNotInstalledInConda
+            : isModulePresent
             ? DataScience.libraryRequiredToLaunchJupyterKernelNotInstalledInterpreterAndRequiresUpdate
             : DataScience.libraryRequiredToLaunchJupyterKernelNotInstalledInterpreter;
         const products: Product[] = [];
@@ -273,7 +272,10 @@ export class KernelDependencyService implements IKernelDependencyService {
         }
         const message = messageFormat(
             interpreter.displayName || interpreter.uri.fsPath,
-            products.map((product) => ProductNames.get(product)!).join(` ${Common.and} `)
+            products
+                .filter((p) => p !== Product.pythonInConda)
+                .map((product) => ProductNames.get(product)!)
+                .join(` ${Common.and} `)
         );
         const productNameForTelemetry = products.map((product) => ProductNames.get(product)!).join(', ');
         const resourceType = resource ? getResourceType(resource) : undefined;

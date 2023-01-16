@@ -38,6 +38,7 @@ import { trackPackageInstalledIntoInterpreter } from './productInstaller';
 import { translateProductToModule } from './utils';
 import { IInterpreterPackages } from '../../platform/interpreter/types';
 import { IInterpreterService } from '../../platform/interpreter/contracts';
+import { IFileSystem } from '../../platform/common/platform/types';
 
 export async function isModulePresentInEnvironment(memento: Memento, product: Product, interpreter: PythonEnvironment) {
     const key = `${await getInterpreterHash(interpreter)}#${ProductNames.get(product)}`;
@@ -118,6 +119,12 @@ export class DataScienceInstaller {
     @traceDecoratorVerbose('Checking if product is installed')
     public async isInstalled(product: Product, @logValue('path') interpreter: PythonEnvironment): Promise<boolean> {
         if (product === Product.pythonInConda) {
+            // Check if the Executable exists, if not, then we know for sure it does not exist.
+            const fs = this.serviceContainer.get<IFileSystem>(IFileSystem);
+            if (!(await fs.exists(interpreter.uri))) {
+                return false;
+            }
+            // Fallback, get the interpreter information.
             const updatedInterpreter = await this.serviceContainer
                 .get<IInterpreterService>(IInterpreterService)
                 .getInterpreterDetails(interpreter.id);

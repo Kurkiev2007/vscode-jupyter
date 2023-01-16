@@ -570,10 +570,11 @@ function getIPyKernelMissingErrorMessageForCell(kernelConnection: KernelConnecti
     let installerCommand = `${getFilePath(
         kernelConnection.interpreter.uri
     ).fileToCommandArgument()} -m pip install ${ipyKernelModuleName} -U --force-reinstall`;
+    const pythonNotInCondaEnv =
+        kernelConnection.interpreter?.envType === EnvironmentType.Conda &&
+        kernelConnection.interpreter.isCondaEnvWithoutPython;
     if (kernelConnection.interpreter?.envType === EnvironmentType.Conda) {
-        const packagesToInstall = kernelConnection.interpreter.isCondaEnvWithoutPython
-            ? `python ${ipyKernelModuleName}`
-            : ipyKernelModuleName;
+        const packagesToInstall = pythonNotInCondaEnv ? `python ${ipyKernelModuleName}` : ipyKernelModuleName;
         if (kernelConnection.interpreter?.envName) {
             installerCommand = `conda install -n ${kernelConnection.interpreter?.envName} ${packagesToInstall}`;
         } else if (kernelConnection.interpreter?.envPath) {
@@ -590,11 +591,16 @@ function getIPyKernelMissingErrorMessageForCell(kernelConnection: KernelConnecti
             kernelConnection.interpreter.uri
         ).fileToCommandArgument()} -m pip install ${ipyKernelModuleName} -U --user --force-reinstall`;
     }
-    const message = DataScience.libraryRequiredToLaunchJupyterKernelNotInstalledInterpreter(
-        displayNameOfKernel,
-        ProductNames.get(Product.ipykernel)!
-    );
-    const installationInstructions = DataScience.installPackageInstructions(ipyKernelName, installerCommand);
+    const message = (
+        pythonNotInCondaEnv
+            ? DataScience.pythonRequiredToLaunchJupyterNotInstalledInConda
+            : DataScience.libraryRequiredToLaunchJupyterKernelNotInstalledInterpreter
+    ).format(displayNameOfKernel, ProductNames.get(Product.ipykernel)!);
+    const installationInstructions = (
+        pythonNotInCondaEnv
+            ? DataScience.installPythonAndCondaPackageInstructions
+            : DataScience.installPackageInstructions
+    ).format(ipyKernelName, installerCommand);
     return message + '\n' + installationInstructions;
 }
 function getJupyterMissingErrorMessageForCell(err: JupyterInstallError) {

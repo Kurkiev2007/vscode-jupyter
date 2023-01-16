@@ -583,7 +583,7 @@
     "DataScience.libraryNotInstalledCorrectlyOrOutdated": "Data Science library {0} is not installed correctly or is outdated. Re-Install?",
     "DataScience.libraryRequiredToLaunchJupyterNotInstalled": "Running cells requires {0} package.",
     "DataScience.librariesRequiredToLaunchJupyterNotInstalled": "Running cells requires {0} package.",
-    "DataScience.pythonRequiredToLaunchJupyterNotInstalledInConda": "Running cells with '{0}' requires Python and the {0} package.",
+    "DataScience.pythonRequiredToLaunchJupyterNotInstalledInConda": "Running cells with '{0}' requires Python and the {1} package.",
     "DataScience.libraryRequiredToLaunchJupyterNotInstalledInterpreter": "Running cells with '{0}' requires the {1} package.",
     "DataScience.librariesRequiredToLaunchJupyterNotInstalledInterpreter": "Running cells with '{0}' requires the {1} package.",
     "DataScience.jupyterInstall": "Install",
@@ -911,6 +911,7 @@
         "comment": ["{Locked='command:jupyter.viewOutput'}", "{Locked='traitlets'}"]
     },
     "DataScience.installPackageInstructions": "Run the following command to install '{0}' into the Python environment. \nCommand: '{1}'",
+    "DataScience.installPythonAndCondaPackageInstructions": "Run the following command to install Python and '{0}' into the Conda environment. \nCommand: '{1}'",
     "DataScience.cannotRunCellKernelIsDead": {
         "message": "Cannot run cells, as the kernel '{0}' is dead.",
         "comment": ["{Locked='kernel'}"]

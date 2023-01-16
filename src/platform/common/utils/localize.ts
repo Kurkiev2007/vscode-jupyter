@@ -143,6 +143,13 @@ export namespace DataScience {
             pythonModuleName,
             commandId
         );
+    export const installPythonAndCondaPackageInstructions = (pythonModuleName: string, commandId: string) =>
+        l10n.t(
+            "Run the following command to install Python and '{0}' into the Conda environment. \nCommand: '{1}'",
+            pythonModuleName,
+            commandId
+        );
+
     export const selectJupyterInterpreter = l10n.t('Select an Interpreter to start Jupyter');
     export const jupyterInstall = l10n.t('Install');
     export const currentlySelectedJupyterInterpreterForPlaceholder = (pythonEnvPath: string) =>
