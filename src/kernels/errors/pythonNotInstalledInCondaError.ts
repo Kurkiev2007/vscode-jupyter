@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 import { DataScience } from '../../platform/common/utils/localize';
+import { getDisplayNameOrNameOfKernelConnection } from '../helpers';
 import { LocalKernelConnectionMetadata } from '../types';
 import { WrappedKernelError } from './types';
 
@@ -11,7 +12,8 @@ import { WrappedKernelError } from './types';
 export class PythonNotInstalledInCondaError extends WrappedKernelError {
     constructor(kernelConnectionMetadata: LocalKernelConnectionMetadata, originalException: Error | undefined) {
         super(
-            DataScience.failedToStartKernelAsPythonIsNotInstalledInCondaEnv().format(
+            DataScience.failedToStartKernelAsPythonIsNotInstalledInCondaEnv(
+                getDisplayNameOrNameOfKernelConnection(kernelConnectionMetadata),
                 kernelConnectionMetadata.interpreter?.envName || ''
             ),
             originalException,

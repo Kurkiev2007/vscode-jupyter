@@ -295,6 +295,12 @@ export namespace DataScience {
                 'Do not translate the link https://aka.ms/vscodeJupyterKernelCrash'
             ]
         });
+    export const failedToStartKernelAsPythonIsNotInstalledInCondaEnv = (kernelName: string, condaEnvName: string) =>
+        l10n.t(
+            "The kernel '{0}' was not started as Python is not installed in the Conda Environment '{0}'.  \nClick [here](https://aka.ms/KernelFailurePythonNotInstalledInConda) for further details, optionally install Python into the Conda Environment using the command `conda install -n {0} python -y`.",
+            kernelName,
+            condaEnvName
+        );
     export const kernelCrashedDueToCodeInCurrentOrPreviousCell = l10n.t({
         message:
             "The Kernel crashed while executing code in the the current cell or a previous cell. Please review the code in the cell(s) to identify a possible cause of the failure. Click <a href='https://aka.ms/vscodeJupyterKernelCrash'>here</a> for more info. View Jupyter [log](command:jupyter.viewOutput) for further details.",

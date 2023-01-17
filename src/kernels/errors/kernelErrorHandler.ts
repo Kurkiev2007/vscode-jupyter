@@ -595,12 +595,12 @@ function getIPyKernelMissingErrorMessageForCell(kernelConnection: KernelConnecti
         pythonNotInCondaEnv
             ? DataScience.pythonRequiredToLaunchJupyterNotInstalledInConda
             : DataScience.libraryRequiredToLaunchJupyterKernelNotInstalledInterpreter
-    ).format(displayNameOfKernel, ProductNames.get(Product.ipykernel)!);
+    )(displayNameOfKernel, ProductNames.get(Product.ipykernel)!);
     const installationInstructions = (
         pythonNotInCondaEnv
             ? DataScience.installPythonAndCondaPackageInstructions
             : DataScience.installPackageInstructions
-    ).format(ipyKernelName, installerCommand);
+    )(ipyKernelName, installerCommand);
     return message + '\n' + installationInstructions;
 }
 function getJupyterMissingErrorMessageForCell(err: JupyterInstallError) {
