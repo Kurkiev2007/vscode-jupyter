@@ -169,7 +169,9 @@ export function getKernelConnectionCategorySync(kernelConnection: KernelConnecti
             }
             switch (kernelConnection.interpreter.envType) {
                 case EnvironmentType.Conda:
-                    return DataScience.kernelCategoryForConda;
+                    return kernelConnection.interpreter.isCondaEnvWithoutPython
+                        ? DataScience.kernelCategoryForCondaWithoutPython
+                        : DataScience.kernelCategoryForConda;
                 case EnvironmentType.Pipenv:
                     return DataScience.kernelCategoryForPipEnv;
                 case EnvironmentType.Poetry:
