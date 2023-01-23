@@ -28,7 +28,7 @@ import { ITrustedKernelPaths } from './types';
 import {
     InterpreterKernelSpecFinderHelper,
     listPythonAndRelatedNonPythonKernelSpecs,
-    LocalPythonKernelsCacheKey
+    localPythonKernelsCacheKey
 } from './interpreterKernelSpecFinderHelper.node';
 
 /**
@@ -114,7 +114,7 @@ export class LocalPythonAndRelatedNonPythonKernelSpecFinderOld extends LocalKern
         );
     }
     public activate() {
-        this.listKernelsFirstTimeFromMemento(LocalPythonKernelsCacheKey)
+        this.listKernelsFirstTimeFromMemento(localPythonKernelsCacheKey())
             .then((kernels) => {
                 if (kernels.length) {
                     // Its possible we have already started discovering via Python API,
@@ -204,7 +204,7 @@ export class LocalPythonAndRelatedNonPythonKernelSpecFinderOld extends LocalKern
         this._onDidChangeKernels.fire();
         const kernels = Array.from(this._kernels.values());
 
-        await this.writeToMementoCache(kernels, LocalPythonKernelsCacheKey).catch(noop);
+        await this.writeToMementoCache(kernels, localPythonKernelsCacheKey()).catch(noop);
     }
     @capturePerfTelemetry(Telemetry.KernelListingPerf, { kind: 'localPython' })
     private async listKernelsImplementationOld(cancelToken: CancellationToken) {
