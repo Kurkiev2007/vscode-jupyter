@@ -125,6 +125,7 @@ export abstract class BaseCoreKernelProvider implements IKernelProvider {
                         )}`
                     );
                 }
+                this.executions.get(kernel)?.dispose();
                 this.pendingDisposables.delete(kernel);
             },
             this,
@@ -138,6 +139,7 @@ export abstract class BaseCoreKernelProvider implements IKernelProvider {
                 `Disposing kernel associated with ${getDisplayPath(notebook.uri)}, isClosed=${notebook.isClosed}`
             );
             this.pendingDisposables.add(kernelToDispose.kernel);
+            this.executions.get(kernelToDispose.kernel)?.dispose();
             kernelToDispose.kernel
                 .dispose()
                 .catch((ex) => traceWarning('Failed to dispose old kernel', ex))

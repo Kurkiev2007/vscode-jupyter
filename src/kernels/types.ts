@@ -321,6 +321,8 @@ export type KernelHooks =
     | 'didStart'
     | 'willCancel';
 export interface IBaseKernel extends IAsyncDisposable {
+    readonly ipywidgetsVersion?: 7 | 8;
+    readonly onIPyWidgetsVersionChanged: Event<7 | 8>;
     readonly uri: Uri;
     /**
      * In the case of Notebooks, this is the same as the Notebook Uri.
@@ -393,7 +395,7 @@ export interface IKernel extends IBaseKernel {
     readonly creator: 'jupyterExtension';
 }
 
-export interface INotebookKernelExecution {
+export interface INotebookKernelExecution extends IDisposable {
     /**
      * Total execution count on this kernel
      */
