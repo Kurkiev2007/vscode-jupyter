@@ -1912,6 +1912,14 @@ export class IEventNamePropertyMapping {
          * selectAnotherInterpreter - Selected another interpreter.
          */
         result?: 'notSelected' | 'selected' | 'installationCancelled' | 'selectAnotherInterpreter';
+        /**
+         * Type of the Python environment.
+         */
+        envType?: EnvironmentType;
+        /**
+         * Python version. (only contains the numbers, no letters and empty if version is not available)
+         */
+        envVersion?: string;
     }> = {
         owner: 'donjayamanne',
         feature: 'N/A',
@@ -1919,6 +1927,14 @@ export class IEventNamePropertyMapping {
         tags: ['KernelStartup'],
         properties: {
             result: {
+                classification: 'SystemMetaData',
+                purpose: 'FeatureInsight'
+            },
+            envType: {
+                classification: 'SystemMetaData',
+                purpose: 'FeatureInsight'
+            },
+            envVersion: {
                 classification: 'SystemMetaData',
                 purpose: 'FeatureInsight'
             }
