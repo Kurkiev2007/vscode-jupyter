@@ -131,15 +131,18 @@ export abstract class ModuleInstaller implements IModuleInstaller {
                             // https://github.com/microsoft/vscode-jupyter/issues/12703
                             // Sometimes on windows we get an error that says "ERROR: Could not install packages due to an OSError: [Errno 2] No such file or directory:"
                             // Look for such errors so we can provide a better error message to the user.
-                            if (output.out.includes('ERROR: Could not install packages')) {
+                            if (couldNotInstallErr) {
+                                couldNotInstallErr += output.out;
+                            } else if (
+                                !couldNotInstallErr &&
+                                output.out.includes('ERROR: Could not install packages')
+                            ) {
                                 couldNotInstallErr = output.out.substring(
                                     output.out.indexOf('ERROR: Could not install packages')
                                 );
                             }
+
                             lastStdErr = output.out;
-                            if (couldNotInstallErr) {
-                                couldNotInstallErr += output.out;
-                            }
                         }
                     },
                     complete: () => {
