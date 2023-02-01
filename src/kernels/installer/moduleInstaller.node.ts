@@ -17,6 +17,7 @@ import { IServiceContainer } from '../../platform/ioc/types';
 import { PythonEnvironment } from '../../platform/pythonEnvironments/info';
 import { IModuleInstaller, ModuleInstallerType, ModuleInstallFlags, Product } from './types';
 import { translateProductToModule } from './utils';
+import { EOL } from 'os';
 
 export type ExecutionInstallArgs = {
     args: string[];
@@ -113,6 +114,7 @@ export abstract class ModuleInstaller implements IModuleInstaller {
                 });
             }
             let lastStdErr: string | undefined;
+            let couldNotInstallErr: string | undefined;
             const ticker = ['', '.', '..', '...'];
             let counter = 0;
             if (observable) {
@@ -126,12 +128,31 @@ export abstract class ModuleInstaller implements IModuleInstaller {
                         progress.report({ message });
                         traceVerbose(output.out);
                         if (output.source === 'stderr') {
+                            // https://github.com/microsoft/vscode-jupyter/issues/12703
+                            // Sometimes on windows we get an error that says "ERROR: Could not install packages due to an OSError: [Errno 2] No such file or directory:"
+                            // Look for such errors so we can provide a better error message to the user.
+                            if (output.out.includes('ERROR: Could not install packages')) {
+                                couldNotInstallErr = output.out.substring(
+                                    output.out.indexOf('ERROR: Could not install packages')
+                                );
+                            }
                             lastStdErr = output.out;
+                            if (couldNotInstallErr) {
+                                couldNotInstallErr += output.out;
+                            }
                         }
                     },
                     complete: () => {
                         if (observable?.proc?.exitCode !== 0) {
-                            deferred.reject(lastStdErr || observable?.proc?.exitCode);
+                            // https://github.com/microsoft/vscode-jupyter/issues/12703
+                            // Remove the `[notice]` lines from the error messages
+                            if (couldNotInstallErr) {
+                                couldNotInstallErr = couldNotInstallErr
+                                    .splitLines({ trim: true, removeEmptyEntries: true })
+                                    .filter((line) => !line.startsWith('[notice]'))
+                                    .join(EOL);
+                            }
+                            deferred.reject(couldNotInstallErr || lastStdErr || observable?.proc?.exitCode);
                         } else {
                             deferred.resolve();
                         }
